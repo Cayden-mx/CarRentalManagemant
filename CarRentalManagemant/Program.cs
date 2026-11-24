@@ -1,6 +1,7 @@
 using CarRentalManagemant.Components;
 using CarRentalManagemant.Components.Account;
 using CarRentalManagemant.Data;
+using CarRentalManagement.Data;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -34,6 +35,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options =>
         options.SignIn.RequireConfirmedAccount = true;
         options.Stores.SchemaVersion = IdentitySchemaVersions.Version3;
     })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<ApplicationDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
@@ -42,6 +44,17 @@ builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSe
 
 var app = builder.Build();
 
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var adminPassword =
+    app.Configuration["SeedAdmin:Password"]
+    ?? throw new InvalidOperationException(
+    "Configure SeedAdmin:Password in user secrets.");
+    await IdentitySeeder.SeedAsync(
+    scope.ServiceProvider, adminPassword);
+}
+ 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
